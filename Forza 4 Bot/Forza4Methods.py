@@ -1413,3 +1413,68 @@ def smartForceWin (gameSeries, default = 1):
         return hardCodeNeeded[0]
     if len(hardCodeNeeded) == 0:
         return 0
+
+
+def isWin(gameSeries, default = 1):
+
+    DR = fastDiagonalRightWinIdentifier(gameSeries, default=default)
+    DL = fastDiagonalLeftWinIdentifier(gameSeries, default=default)
+    H = fastHorizontalWinIdentification(gameSeries, default=default)
+    V = fastVerticalWinIdentifier(gameSeries, default=default)
+
+    if DR | DL | H | V:
+        win = 1
+    else:
+        win = 0
+
+    return win
+
+def V3DataBase_generateSingleMatch ():
+
+    import pandas as pd
+    import numpy as np
+    import random
+    import Forza4Methods as f4
+
+    # Initialize the board
+
+    columns = ['F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7',
+               'E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'E7',
+               'D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7',
+               'C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7',
+               'B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7',
+               'A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7']
+
+    board = pd.DataFrame(data=np.zeros(len(columns)).reshape(1, 42), columns=columns, index=np.zeros(1))
+
+    # Initialize symbols, 1 = 'X', 2 = 'O'
+    symbol = pd.Series([1, 2])
+    move = random.choice(symbol)
+
+    index1 = f4.isWin(board.transpose()[0], default=1)
+    index2 = f4.isWin(board.transpose()[0], default=2)
+    while (index1 != 1) & (index2 != 1):
+
+        # Select the cells where we can play
+        firstPlace = f4.playCells(board.transpose())
+
+        # Select a cell to play among the admissible
+        randomMove = random.choice(firstPlace)
+
+        # play there
+        board[randomMove] = move
+
+        # print(f4.convertToVisualGame(board.transpose()))
+
+        # Define the next to play
+        move = symbol[symbol != move].reset_index()[0][0]
+
+        index1 = f4.isWin(board.transpose()[0], default=1)
+        index2 = f4.isWin(board.transpose()[0], default=2)
+
+        if index1 == 1:
+            board['Win1'] = 1
+        if index2 == 1:
+            board['WIn2'] = 1
+
+    return board
